@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🚀 Space Weight &amp; Age Explorer</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#000814;color:#dce8ff;min-height:100vh;overflow-x:hidden}
+    body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+      background-image:radial-gradient(circle,#fff 1px,transparent 1px),
+        radial-gradient(circle,#aac0ff .5px,transparent .5px),
+        radial-gradient(circle,#fff .3px,transparent .3px);
+      background-size:250px 250px,80px 80px,45px 45px;background-position:0 0,35px 45px,60px 22px;
+      opacity:.18;pointer-events:none;z-index:0}
+    .wrapper{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:16px 16px 70px}
+    /* Header */
+    header{text-align:center;padding:28px 0 14px}
+    header h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:900;letter-spacing:1px;
+      background:linear-gradient(90deg,#ffd32a,#f0932b,#74b9ff,#a29bfe);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    header p{font-size:.92rem;opacity:.7;margin-top:6px}
+    /* Cards */
+    .card{background:rgba(5,10,35,.93);border:1px solid rgba(100,140,255,.2);border-radius:18px;
+      padding:22px 26px;margin-bottom:22px;box-shadow:0 6px 32px rgba(0,0,0,.55)}
+    .card h2{font-size:1.18rem;color:#ffd32a;margin-bottom:16px}
+    /* Inputs */
+    .input-row{display:flex;flex-wrap:wrap;gap:14px}
+    .input-group{flex:1 1 170px}
+    .field-label{display:block;font-size:.85rem;opacity:.75;margin-bottom:5px}
+    input[type="number"],input[type="text"]{width:100%;padding:9px 11px;border-radius:9px;
+      border:1px solid rgba(100,140,255,.35);background:rgba(255,255,255,.06);color:#fff;font-size:1rem}
+    input:focus{outline:none;border-color:#74b9ff}
+    .unit-row{display:flex;gap:16px;margin-top:8px;font-size:.88rem}
+    .unit-row label{cursor:pointer;display:flex;align-items:center;gap:5px}
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:10px;
+      padding:10px 22px;font-size:.95rem;font-weight:700;cursor:pointer;
+      transition:transform .12s,box-shadow .12s;margin-top:12px;margin-right:8px}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+    .btn:active{transform:scale(.97)}
+    .btn-launch{background:linear-gradient(90deg,#ffd32a,#f0932b);color:#000}
+    .btn-random{background:linear-gradient(90deg,#74b9ff,#a29bfe);color:#000}
+    .btn-capture{background:linear-gradient(90deg,#00cec9,#55efc4);color:#000;font-size:1.05rem;padding:12px 26px}
+    .btn-nav{background:rgba(100,140,255,.18);color:#dce8ff;border:1px solid rgba(100,140,255,.3)}
+    /* Planet grid */
+    .planet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px;margin-top:8px}
+    .planet-tile{cursor:pointer;text-align:center;padding:12px 6px 10px;border-radius:14px;
+      border:2px solid rgba(100,140,255,.15);background:rgba(255,255,255,.03);
+      transition:border-color .15s,transform .15s,background .15s}
+    .planet-tile:hover{border-color:#ffd32a;transform:scale(1.06);background:rgba(255,211,42,.07)}
+    .planet-tile.active{border-color:#55efc4;background:rgba(85,239,196,.08)}
+    .planet-name{font-size:.82rem;display:block;color:#b0c8ff;margin-top:6px;font-weight:600}
+    /* Tilt label under planet */
+    .tilt-label{font-size:.72rem;margin-top:3px;display:block;letter-spacing:.3px}
+    .tilt-bar-wrap{height:4px;border-radius:2px;background:rgba(255,255,255,.1);
+      margin:4px 8px 0;position:relative;overflow:visible}
+    .tilt-bar{height:4px;border-radius:2px;background:linear-gradient(90deg,#74b9ff,#a29bfe);
+      min-width:2px;transition:width .3s}
+    /* Loader */
+    .planet-wrap{position:relative;display:inline-block}
+    .loading-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      width:28px;height:28px;border:3px solid rgba(255,255,255,.1);
+      border-top-color:#74b9ff;border-radius:50%;animation:ld .8s linear infinite;pointer-events:none}
+    @keyframes ld{to{transform:translate(-50%,-50%) rotate(360deg)}}
+    /* Planet canvases */
+    canvas.planet-sm{width:70px;height:70px;border-radius:50%;display:block;margin:0 auto;
+      box-shadow:0 0 18px rgba(0,0,0,.9),0 0 8px rgba(80,140,255,.28)}
+    canvas.planet-lg{width:160px;height:160px;border-radius:50%;display:block;margin:0 auto;
+      box-shadow:0 0 40px rgba(80,140,255,.4),0 0 16px rgba(0,0,0,.6)}
+    /* Saturn rings */
+    .saturn-wrap{position:relative;display:inline-block}
+    .ring-back,.ring-front{position:absolute;pointer-events:none;left:50%;top:50%}
+    .ring-sm .ring-back{width:120px;height:24px;margin-left:-60px;margin-top:-12px;
+      border-radius:50%;border:7px solid transparent;border-top:7px solid rgba(210,178,80,.55);z-index:0}
+    .ring-sm .ring-front{width:120px;height:24px;margin-left:-60px;margin-top:-12px;
+      border-radius:50%;border:7px solid transparent;border-bottom:7px solid rgba(220,188,90,.7);z-index:2}
+    .ring-sm canvas{position:relative;z-index:1}
+    .ring-lg .ring-back{width:280px;height:56px;margin-left:-140px;margin-top:-28px;
+      border-radius:50%;border:15px solid transparent;border-top:15px solid rgba(210,178,80,.5);z-index:0}
+    .ring-lg .ring-front{width:280px;height:56px;margin-left:-140px;margin-top:-28px;
+      border-radius:50%;border:15px solid transparent;border-bottom:15px solid rgba(220,188,90,.72);z-index:2}
+    .ring-lg canvas{position:relative;z-index:1}
+    /* Detail */
+    .detail-layout{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+    .detail-visual{flex:0 0 200px;text-align:center}
+    .detail-info{flex:1 1 280px}
+    .info-box{background:rgba(255,255,255,.04);border-radius:11px;padding:13px 16px;margin-bottom:11px}
+    .info-box h3{font-size:.88rem;color:#ffd32a;margin-bottom:5px}
+    .big-num{font-size:1.7rem;font-weight:800;color:#55efc4}
+    .sub-text{font-size:.8rem;opacity:.68;margin-top:3px}
+    /* Tilt display in detail */
+    .tilt-detail-box{background:rgba(116,185,255,.1);border:1px solid rgba(116,185,255,.25);
+      border-radius:11px;padding:13px 16px;margin-bottom:11px}
+    .tilt-detail-box h3{font-size:.88rem;color:#74b9ff;margin-bottom:8px}
+    .tilt-axis-vis{display:flex;align-items:center;gap:14px;margin-top:6px}
+    .tilt-axis-diagram{width:50px;height:50px;flex-shrink:0}
+    .tilt-desc{font-size:.82rem;line-height:1.5;opacity:.85}
+    .fun-fact{background:rgba(116,185,255,.1);border-left:3px solid #74b9ff;
+      border-radius:5px;padding:10px 14px;font-size:.88rem;font-style:italic;margin-top:8px;line-height:1.55}
+    .rot-badge{display:inline-block;font-size:.78rem;margin-top:8px;padding:4px 10px;
+      background:rgba(249,202,36,.14);border:1px solid rgba(249,202,36,.4);border-radius:20px;color:#ffd32a}
+    /* Summary */
+    #summaryCapture{background:#000c1e;border-radius:12px;padding:18px 16px}
+    #reportTitle{font-size:1.2rem;color:#ffd32a}
+    #reportSubtitle{font-size:.82rem;opacity:.65;margin-top:4px;margin-bottom:14px}
+    table{width:100%;border-collapse:collapse;font-size:.85rem}
+    th{background:#060e28;color:#ffd32a;padding:8px 10px;text-align:left;border-bottom:1px solid rgba(100,140,255,.3)}
+    td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.06)}
+    tr:nth-child(even) td{background:rgba(255,255,255,.025)}
+    .earth-row td{color:#55efc4;font-weight:700}
+    .badge-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+    .badge{background:rgba(255,211,42,.12);border:1px solid rgba(255,211,42,.5);
+      border-radius:20px;padding:5px 12px;font-size:.8rem}
+    .note{font-size:.75rem;opacity:.6;margin-top:14px;text-align:center;line-height:1.6}
+    .hidden{display:none!important}
+    @media(max-width:600px){
+      .card{padding:16px}
+      .planet-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <h1>🚀 Space Weight &amp; Age Explorer</h1>
+    <p>Enter your Earth weight &amp; age — fly to every planet and see what changes!</p>
+    <p style="font-size:.7rem;opacity:.45;margin-top:4px">
+      Textures: Solar System Scope CC BY 4.0 (NASA imagery) &nbsp;·&nbsp;
+      Data: NASA/JPL &amp; NASA Space Place &amp; NASA Solar System Exploration
+    </p>
+  </header>
+
+  <!-- STEP 1 -->
+  <section class="card" id="step1">
+    <h2>☝️ Step 1 — Tell us about you</h2>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="field-label">👤 Your name (optional)</label>
+        <input type="text" id="kidName" placeholder="e.g. Alex"/>
+      </div>
+      <div class="input-group">
+        <label class="field-label">⚖️ Your weight on Earth</label>
+        <input type="number" id="earthWeight" min="1" step="0.1" placeholder="e.g. 30"/>
+        <div class="unit-row">
+          <label><input type="radio" name="unit" value="kg" checked/> kg</label>
+          <label><input type="radio" name="unit" value="lb"/> lb</label>
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="field-label">🎂 Your Earth age (years)</label>
+        <input type="number" id="earthAge" min="1" step="0.1" placeholder="e.g. 8"/>
+      </div>
+    </div>
+    <div>
+      <button class="btn btn-launch" onclick="startGame()">🚀 Blast Off!</button>
+      <button class="btn btn-random" onclick="randomPlanet()">🎲 Random Planet!</button>
+    </div>
+    <p class="note">
+      💡 <strong>Weight</strong> = gravity × mass — same mass, different gravity, different weight!<br/>
+      🌀 Each planet spins at its real relative speed &nbsp;·&nbsp; The dashed line shows each planet's spin axis tilt
+    </p>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="card" id="step2">
+    <h2>🌍 Step 2 — Pick a spinning planet!</h2>
+    <div class="planet-grid" id="planetGrid"></div>
+    <p class="note" style="margin-top:12px">
+      The <strong>dashed line</strong> on each planet shows its real spin axis. The bar below shows how tilted it is (0° = upright, 90° = sideways).
+    </p>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="card hidden" id="step3">
+    <h2 id="detailTitle">Planet</h2>
+    <div class="detail-layout">
+      <div class="detail-visual" id="detailVisual"></div>
+      <div class="detail-info">
+        <div class="info-box">
+          <h3>⚖️ Your weight here</h3>
+          <div class="big-num" id="detailWeight">—</div>
+          <div class="sub-text" id="detailWeightSub">—</div>
+        </div>
+        <div class="info-box">
+          <h3>🎂 Your age in planet years</h3>
+          <div class="big-num" id="detailAge">—</div>
+          <div class="sub-text" id="detailAgeSub">—</div>
+        </div>
+        <!-- Tilt detail box -->
+        <div class="tilt-detail-box">
+          <h3>🔄 Axial Tilt &amp; Rotation</h3>
+          <div class="tilt-axis-vis">
+            <canvas id="tiltDiagram" class="tilt-axis-diagram" width="50" height="50"></canvas>
+            <div class="tilt-desc" id="tiltDesc">—</div>
+          </div>
+        </div>
+        <div id="detailRotBadge" class="rot-badge"></div>
+        <div class="fun-fact" id="detailFact">—</div>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <button class="btn btn-nav" onclick="goTo('step2')">⬅ Back to planets</button>
+      <button class="btn btn-nav" onclick="goTo('step4')">📋 See full report ▶</button>
+    </div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="card" id="step4">
+    <h2>📋 Step 3 — Your Space Passport</h2>
+    <p id="summaryPlaceholder" style="opacity:.6;font-size:.9rem">Enter your details and click Blast Off! to see your space report.</p>
+    <div id="summaryCapture" class="hidden">
+      <div id="reportTitle">Space Passport</div>
+      <div id="reportSubtitle"></div>
+      <table>
+        <thead><tr>
+          <th>🪐 Planet</th><th>⚖️ Your Weight</th>
+          <th>🎂 Age (Planet Yrs)</th><th>📅 Year Length</th>
+          <th>🌀 Day Length</th><th>↕ Axial Tilt</th>
+        </tr></thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+      <div class="badge-row" id="badgeRow"></div>
+      <p class="note" id="reportNote"></p>
+    </div>
+    <div style="margin-top:16px">
+      <button class="btn btn-capture" onclick="captureReport()">📸 Save Space Passport as Image</button>
+    </div>
+    <p class="note">Downloads a PNG you can print or share!</p>
+  </section>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   DATA SOURCES
+   Gravity & year lengths : NASA/JPL Solar System Exploration
+                            + NASA Space Place
+   Rotation periods       : NASA Space Place + NOAA SOS
+   Axial tilts            : NASA Solar System Exploration
+                            (solarsystem.nasa.gov/planets)
+   Textures               : Solar System Scope CC BY 4.0
+                            (based on NASA imagery)
+   ════════════════════════════════════════════════════════════ */
+const PLANETS = [
+  {
+    "name": "Mercury",
+    "gravity": 0.38,
+    "yearDays": 88,
+    "rotSpeed": 0.12,
+    "tilt": 0.03,
+    "dayLabel": "1,408 hrs (58.6 days)",
+    "img": "https://upload.wikimedia.org/wikipedia/commons/9/92/Solarsystemscope_texture_2k_mercury.jpg",
+    "fact": "Mercury has almost no tilt (0.03\u00b0) \u2014 it spins nearly perfectly upright! And one day there lasts 59 Earth days \u2014 longer than its whole year!"
+  },
+  {
+    "name": "Venus",
+    "gravity": 0.9,
+    "yearDays": 225,
+    "rotSpeed": -0.12,
+    "tilt": 177.4,
+    "dayLabel": "5,832 hrs (243 days) \u2014 backwards! \u21ba",
+    "img": "https://upload.wikimedia.org/wikipedia/commons/4/40/Solarsystemscope_texture_2k_venus_surface.jpg",
+    "fact": "Venus's 177.4\u00b0 tilt means it's almost completely upside-down \u2014 it spins backwards! The Sun rises in the west there."
+  },
+  {
+    "name": "Earth",
+    "gravity": 1.0,
+    "yearDays": 365,
+    "rotSpeed": 0.9,
+    "tilt": 23.4,
+    "dayLabel": "24 hours",
+    "img": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Solarsystemscope_texture_2k_earth_daymap.jpg",
+    "fact": "Earth's 23.4\u00b0 tilt is what gives us our four seasons! Without it, every day everywhere would feel the same temperature all year."
+  },
+  {
+    "name": "Mars",
+    "gravity": 0.38,
+    "yearDays": 687,
+    "rotSpeed": 0.864,
+    "tilt": 25.2,
+    "dayLabel": "24 hrs 37 min",
+    "img": "https://upload.wikimedia.org/wikipedia/commons/4/46/Solarsystemscope_texture_2k_mars.jpg",
+    "fact": "Mars's 25.2\u00b0 tilt is very similar to Earth's, so Mars also has four seasons \u2014 but each one lasts almost twice as long!"
+  },
+  {
+    "name": "Jupiter",
+    "gravity": 2.53,
+    "yearDays": 4333,
+    "rotSpeed": 2.16,
+    "tilt": 3.1,
+    "dayLabel": "9 hrs 56 min \u2014 FASTEST!",
+    "img": "https://upload.wikimedia.org/wikipedia/commons/b/be/Solarsystemscope_texture_2k_jupiter.jpg",
+    "fact": "Jupiter barely tilts at just 3.1\u00b0 \u2014 so it has almost no seasons at all! Its rapid 10-hour spin makes it the flattest planet (bulging at the equator)."
+  },
+  {
+    "name": "Saturn",
+    "gravity": 1.06,
+    "yearDays": 10759,
+    "rotSpeed": 1.9636,
+    "tilt": 26.7,
+    "dayLabel": "10 hrs 33 min",
+    "img": "https://upload.wikimedia.org/wikipedia/commons/e/ea/Solarsystemscope_texture_2k_saturn.jpg",
+    "fact": "Saturn's 26.7\u00b0 tilt is similar to Earth and Mars, giving it distinct seasons. When tilted toward us, we see more of its beautiful rings!"
+  },
+  {
+    "name": "Uranus",
+    "gravity": 0.89,
+    "yearDays": 30687,
+    "rotSpeed": 1.2706,
+    "tilt": 97.8,
+    "dayLabel": "17 hrs 14 min \u2014 rolling sideways! \u2195",
+    "img": "https://upload.wikimedia.org/wikipedia/commons/9/95/Solarsystemscope_texture_2k_uranus.jpg",
+    "fact": "Uranus's massive 97.8\u00b0 tilt makes it roll on its side around the Sun like a bowling ball! Each pole gets 42 years of sunlight followed by 42 years of total darkness."
+  },
+  {
+    "name": "Neptune",
+    "gravity": 1.14,
+    "yearDays": 60190,
+    "rotSpeed": 1.35,
+    "tilt": 28.3,
+    "dayLabel": "16 hrs 6 min",
+    "img": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Solarsystemscope_texture_2k_neptune.jpg",
+    "fact": "Neptune's 28.3\u00b0 tilt gives it seasons too, but each one lasts about 40 Earth years since its year is 165 Earth years long!"
+  }
+];
+const EARTH_DAYS = 365;
+
+/* ── Image preload ───────────────────────────────────────── */
+const imgs = PLANETS.map(p => {
+  const img = new Image(); img.crossOrigin = "anonymous"; img.src = p.img; return img;
+});
+const offsets  = new Array(PLANETS.length).fill(0);
+const registry = PLANETS.map(() => ({sm:null, lg:null}));
+
+/* ══════════════════════════════════════════════════════════
+   drawPlanet(cv, img, offset, tiltDeg)
+   ──────────────────────────────────────────────────────────
+   1. Clips canvas to circle.
+   2. Rotates canvas by tiltDeg so the texture scrolls along
+      the planet's real spin axis direction.
+   3. Draws equirectangular texture (2:1) scrolled by offset.
+   4. Composites a lighting gradient (bright spot + dark limb).
+   5. Draws a dashed white axis line at the tilt angle,
+      showing the planet's real spin axis visually.
+   ══════════════════════════════════════════════════════════ */
+function drawPlanet(cv, img, offset, tiltDeg) {
+  if (!cv) return;
+  const sz = cv.width, r = sz / 2;
+  const ctx = cv.getContext("2d");
+  ctx.clearRect(0, 0, sz, sz);
+  if (!img.complete || !img.naturalHeight) return;
+
+  const sw = sz * 2;
+  const sx = -((offset % sw + sw) % sw);
+
+  /* 1 — Texture (rotated by axial tilt) */
+  ctx.save();
+  ctx.beginPath(); ctx.arc(r, r, r - 0.5, 0, Math.PI * 2); ctx.clip();
+  if (tiltDeg) {
+    ctx.translate(r, r);
+    ctx.rotate(tiltDeg * Math.PI / 180);
+    ctx.translate(-r, -r);
+  }
+  ctx.drawImage(img, sx,       0, sw, sz);
+  ctx.drawImage(img, sx + sw,  0, sw, sz);
+  ctx.drawImage(img, sx - sw,  0, sw, sz);
+  ctx.restore();
+
+  /* 2 — Lighting overlay */
+  ctx.save();
+  ctx.beginPath(); ctx.arc(r, r, r - 0.5, 0, Math.PI * 2); ctx.clip();
+  const g = ctx.createRadialGradient(r*.50, r*.42, r*.04, r, r, r);
+  g.addColorStop(0,    "rgba(255,255,255,.22)");
+  g.addColorStop(0.35, "rgba(255,255,255,.04)");
+  g.addColorStop(0.72, "rgba(0,0,0,0)");
+  g.addColorStop(1,    "rgba(0,0,0,.68)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, sz, sz);
+  ctx.restore();
+
+  /* 3 — Spin axis line
+     The axial tilt is measured from the perpendicular to the orbital plane.
+     We draw the axis from the "north pole" to the "south pole".
+     At 0°  → vertical line  |
+     At 23° → slightly tilted (Earth)
+     At 90° → horizontal line  —  (would be perfectly sideways)
+     At 97.8° → just past horizontal (Uranus, slightly past sideways)
+     At 177° → nearly vertical but flipped (Venus, upside-down)         */
+  const halfLen   = r * 0.72;
+  const rad       = tiltDeg * Math.PI / 180;
+  const ax        = Math.sin(rad) * halfLen;
+  const ay        = Math.cos(rad) * halfLen;   // positive = downward in canvas
+
+  ctx.save();
+  ctx.beginPath(); ctx.arc(r, r, r - 0.5, 0, Math.PI * 2); ctx.clip();
+  ctx.strokeStyle = "rgba(255,255,255,0.65)";
+  ctx.lineWidth   = sz > 80 ? 1.8 : 1.2;
+  ctx.setLineDash([sz > 80 ? 4 : 2.5, sz > 80 ? 3 : 2]);
+  ctx.beginPath();
+  ctx.moveTo(r - ax, r - ay);   // north pole tip
+  ctx.lineTo(r + ax, r + ay);   // south pole tip
+  ctx.stroke();
+  // Small dots at pole tips
+  ctx.fillStyle = "rgba(255,255,255,0.8)";
+  ctx.setLineDash([]);
+  [[r - ax, r - ay],[r + ax, r + ay]].forEach(([x,y]) => {
+    ctx.beginPath(); ctx.arc(x, y, sz>80?2.5:1.5, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+}
+
+/* ── Draw mini tilt diagram (detail view) ────────────────── */
+function drawTiltDiagram(canvas, tiltDeg) {
+  const sz = canvas.width, r = sz/2;
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0,0,sz,sz);
+  // Orbital plane line
+  ctx.strokeStyle="rgba(255,211,42,.5)"; ctx.lineWidth=1; ctx.setLineDash([3,2]);
+  ctx.beginPath(); ctx.moveTo(4,r); ctx.lineTo(sz-4,r); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle="rgba(255,211,42,.5)"; ctx.font="8px Arial";
+  ctx.fillText("orbit",2,r-3);
+  // Vertical (no tilt reference)
+  ctx.strokeStyle="rgba(255,255,255,.18)"; ctx.lineWidth=1; ctx.setLineDash([2,3]);
+  ctx.beginPath(); ctx.moveTo(r,4); ctx.lineTo(r,sz-4); ctx.stroke();
+  ctx.setLineDash([]);
+  // Tilt axis
+  const hl = r*0.82, rad = tiltDeg * Math.PI/180;
+  const ax = Math.sin(rad)*hl, ay = Math.cos(rad)*hl;
+  ctx.strokeStyle="#74b9ff"; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(r-ax,r-ay); ctx.lineTo(r+ax,r+ay); ctx.stroke();
+  ctx.fillStyle="#74b9ff";
+  [[r-ax,r-ay],[r+ax,r+ay]].forEach(([x,y])=>{
+    ctx.beginPath(); ctx.arc(x,y,2.5,0,Math.PI*2); ctx.fill();
+  });
+  // Arc showing angle
+  ctx.strokeStyle="rgba(116,185,255,.5)"; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(r,r,12, -Math.PI/2, -Math.PI/2+rad, rad<0); ctx.stroke();
+  // Label
+  ctx.fillStyle="#74b9ff"; ctx.font="bold 8px Arial"; ctx.textAlign="center";
+  ctx.fillText(tiltDeg.toFixed(1)+"°", r+16*Math.sin(rad/2), r-16*Math.cos(rad/2)+3);
+}
+
+/* ── Tilt colour helper ──────────────────────────────────── */
+function tiltColour(t) {
+  const a = Math.abs(t > 90 ? 180 - t : t); // effective tilt 0-90
+  if (a < 10)  return "#74b9ff";   // near upright — blue
+  if (a < 35)  return "#ffd32a";   // moderate     — yellow
+  if (a < 70)  return "#f0932b";   // large         — orange
+  return "#e84393";                 // extreme       — pink/red
+}
+
+/* ── Animation loop ──────────────────────────────────────── */
+function animLoop() {
+  PLANETS.forEach((p,i) => {
+    offsets[i] += p.rotSpeed;
+    const reg = registry[i], t = p.tilt || 0;
+    if (reg.sm) drawPlanet(reg.sm, imgs[i], offsets[i], t);
+    if (reg.lg) drawPlanet(reg.lg, imgs[i], offsets[i], t);
+  });
+  requestAnimationFrame(animLoop);
+}
+
+/* ── Canvas factory ──────────────────────────────────────── */
+function makeCV(sz, cls) {
+  const cv = document.createElement("canvas"); cv.width=sz; cv.height=sz; cv.className=cls; return cv;
+}
+function saturnWrap(cv, sc) {
+  const w=document.createElement("div"); w.className="saturn-wrap "+sc;
+  const b=document.createElement("div"); b.className="ring-back";
+  const f=document.createElement("div"); f.className="ring-front";
+  w.appendChild(b); w.appendChild(cv); w.appendChild(f); return w;
+}
+function spinner(sz) {
+  const d=document.createElement("div"); d.className="loading-ring";
+  if(sz) d.style.cssText=`width:${sz}px;height:${sz}px;border-width:4px`; return d;
+}
+
+/* ── Helpers ─────────────────────────────────────────────── */
+function getInputs() {
+  const w=parseFloat(document.getElementById("earthWeight").value);
+  const a=parseFloat(document.getElementById("earthAge").value);
+  const u=document.querySelector('input[name="unit"]:checked').value;
+  const n=document.getElementById("kidName").value.trim()||"Explorer";
+  if(isNaN(w)||w<=0){alert("Please enter a valid weight!");return null;}
+  if(isNaN(a)||a<=0){alert("Please enter a valid age!");return null;}
+  return{weight:w,age:a,unit:u,name:n};
+}
+function goTo(id){document.getElementById(id).scrollIntoView({behavior:"smooth"});}
+
+/* ── Build planet grid ───────────────────────────────────── */
+function buildGrid() {
+  const grid=document.getElementById("planetGrid"); grid.innerHTML="";
+  PLANETS.forEach((p,i)=>{
+    const tile=document.createElement("div"); tile.className="planet-tile"; tile.id="tile-"+i;
+    const cv=makeCV(70,"planet-sm"); registry[i].sm=cv;
+    const wrap=document.createElement("div"); wrap.className="planet-wrap";
+    const sp=spinner(); wrap.appendChild(sp);
+    wrap.appendChild(p.name==="Saturn"?saturnWrap(cv,"ring-sm"):cv);
+
+    const nameEl=document.createElement("span"); nameEl.className="planet-name"; nameEl.textContent=p.name;
+
+    // Tilt label with colour coding
+    const effTilt = Math.abs(p.tilt>90? 180-p.tilt : p.tilt);
+    const tiltEl=document.createElement("span"); tiltEl.className="tilt-label";
+    tiltEl.style.color=tiltColour(p.tilt);
+    tiltEl.textContent="↕ "+p.tilt.toFixed(1)+"° tilt";
+
+    // Tilt bar (0–90° effective range, capped)
+    const barWrap=document.createElement("div"); barWrap.className="tilt-bar-wrap";
+    const bar=document.createElement("div"); bar.className="tilt-bar";
+    bar.style.width=(Math.min(effTilt,90)/90*100)+"%";
+    bar.style.background=`linear-gradient(90deg,${tiltColour(p.tilt)},rgba(255,255,255,.3))`;
+    barWrap.appendChild(bar); 
+
+    tile.appendChild(wrap); tile.appendChild(nameEl); tile.appendChild(tiltEl); tile.appendChild(barWrap);
+    tile.addEventListener("click",()=>showPlanet(i)); grid.appendChild(tile);
+
+    imgs[i].addEventListener("load",()=>sp.style.display="none",{once:true});
+    if(imgs[i].complete) sp.style.display="none";
+  });
+}
+
+/* ── Start / Random ──────────────────────────────────────── */
+function startGame()   {if(!getInputs())return; buildSummary(); goTo("step2");}
+function randomPlanet(){if(!getInputs())return; buildSummary(); showPlanet(Math.floor(Math.random()*PLANETS.length));}
+
+/* ── Show planet detail ──────────────────────────────────── */
+function showPlanet(i) {
+  const inp=getInputs(); if(!inp)return;
+  const p=PLANETS[i];
+  document.querySelectorAll(".planet-tile").forEach((t,j)=>t.classList.toggle("active",j===i));
+
+  const lgCV=makeCV(160,"planet-lg"); registry[i].lg=lgCV;
+  drawPlanet(lgCV,imgs[i],offsets[i],p.tilt||0);
+
+  const dv=document.getElementById("detailVisual"); dv.innerHTML="";
+  const ow=document.createElement("div"); ow.className="planet-wrap";
+  const sp=spinner(50); ow.appendChild(sp);
+  ow.appendChild(p.name==="Saturn"?saturnWrap(lgCV,"ring-lg"):lgCV);
+  imgs[i].addEventListener("load",()=>sp.style.display="none",{once:true});
+  if(imgs[i].complete) sp.style.display="none";
+  dv.appendChild(ow);
+
+  const pw=inp.weight*p.gravity, pa=inp.age*(EARTH_DAYS/p.yearDays);
+  document.getElementById("detailTitle").textContent="🪐 You landed on "+p.name+"!";
+  document.getElementById("detailWeight").textContent=pw.toFixed(1)+" "+inp.unit;
+  document.getElementById("detailWeightSub").textContent=
+    "On Earth: "+inp.weight.toFixed(1)+" "+inp.unit+"  ·  Gravity = "+p.gravity+"× Earth";
+  document.getElementById("detailAge").textContent=pa.toFixed(1)+" "+p.name+" years";
+  document.getElementById("detailAgeSub").textContent=
+    "1 "+p.name+" year = "+p.yearDays.toLocaleString()+" Earth days  ·  Your Earth age: "+inp.age;
+  document.getElementById("detailRotBadge").textContent="🌀 Day: "+p.dayLabel;
+
+  // Tilt diagram + description
+  const td=document.getElementById("tiltDiagram"); drawTiltDiagram(td, p.tilt);
+  const effT=Math.abs(p.tilt>90? 180-p.tilt : p.tilt);
+  let tiltNote="";
+  if(effT<5)       tiltNote="Nearly perfectly upright — almost no seasons!";
+  else if(effT<30) tiltNote="Moderate tilt — creates mild seasons.";
+  else if(effT<70) tiltNote="Large tilt — creates strong seasons!";
+  else if(effT<92) tiltNote="Extreme tilt — rolling sideways like a bowling ball!";
+  else             tiltNote="Almost completely upside-down — spins backwards!";
+  document.getElementById("tiltDesc").innerHTML=
+    `<strong style="color:${tiltColour(p.tilt)}">${p.tilt.toFixed(1)}° axial tilt</strong><br>${tiltNote}<br>
+    <span style="opacity:.7">🌍 Earth = 23.4° (for reference)</span>`;
+
+  document.getElementById("detailFact").textContent="🌟 "+p.fact;
+  const s3=document.getElementById("step3"); s3.classList.remove("hidden");
+  s3.scrollIntoView({behavior:"smooth"}); buildSummary();
+}
+
+/* ── Summary table ───────────────────────────────────────── */
+function buildSummary() {
+  const inp=getInputs(); if(!inp)return;
+  document.getElementById("summaryPlaceholder").classList.add("hidden");
+  document.getElementById("summaryCapture").classList.remove("hidden");
+  document.getElementById("reportTitle").textContent="🚀 "+inp.name+"'s Space Passport";
+  document.getElementById("reportSubtitle").textContent=
+    "Earth weight: "+inp.weight.toFixed(1)+" "+inp.unit+
+    "  ·  Earth age: "+inp.age.toFixed(1)+" yrs  ·  Source: NASA/JPL & NASA Space Place";
+  const tbody=document.getElementById("summaryBody"); tbody.innerHTML="";
+  let hvy,lgt,bday;
+  PLANETS.forEach(p=>{
+    const pw=inp.weight*p.gravity, pa=inp.age*(EARTH_DAYS/p.yearDays);
+    if(!hvy||pw>hvy.w) hvy={name:p.name,w:pw};
+    if(!lgt||pw<lgt.w) lgt={name:p.name,w:pw};
+    if(!bday||pa>bday.a) bday={name:p.name,a:pa};
+    const tr=document.createElement("tr");
+    if(p.name==="Earth") tr.className="earth-row";
+    tr.innerHTML=`<td>${p.name}</td><td>${pw.toFixed(1)} ${inp.unit}</td>`
+      +`<td>${pa.toFixed(1)}</td><td>${p.yearDays.toLocaleString()} days</td>`
+      +`<td>${p.dayLabel}</td>`
+      +`<td style="color:${tiltColour(p.tilt)}">${p.tilt.toFixed(1)}°</td>`;
+    tbody.appendChild(tr);
+  });
+  const br=document.getElementById("badgeRow"); br.innerHTML="";
+  const badge=t=>{const b=document.createElement("span");b.className="badge";b.textContent=t;br.appendChild(b);};
+  badge("🏋️ Heaviest: "+hvy.name+" ("+hvy.w.toFixed(1)+" "+inp.unit+")");
+  badge("🪶 Lightest: "+lgt.name+" ("+lgt.w.toFixed(1)+" "+inp.unit+")");
+  badge("🎂 Most birthdays: "+bday.name+" ("+bday.a.toFixed(0)+" yrs)");
+  badge("↕ Most tilted: Uranus (97.8°)");
+  badge("↕ Least tilted: Mercury (0.03°)");
+  if(inp.age*(EARTH_DAYS/88)>100) badge("💯 Over 100 Mercury years! 🎉");
+  if(inp.weight*2.53>100) badge("🪐 Over 100 "+inp.unit+" on Jupiter! 💪");
+  document.getElementById("reportNote").textContent=
+    "Gravity: NASA/JPL Solar System Exploration  ·  Year & day lengths: NASA Space Place  ·  "+
+    "Axial tilts: NASA Solar System Exploration  ·  Textures: Solar System Scope CC BY 4.0 (based on NASA imagery)";
+}
+
+/* ── Screenshot ──────────────────────────────────────────── */
+function captureReport() {
+  const inp=getInputs();
+  if(!inp){alert("Enter your details and click Blast Off! first.");return;}
+  if(document.getElementById("summaryCapture").classList.contains("hidden")) buildSummary();
+  const rows=PLANETS.map(p=>({
+    name:p.name, w:(inp.weight*p.gravity).toFixed(1)+" "+inp.unit,
+    a:(inp.age*(EARTH_DAYS/p.yearDays)).toFixed(1),
+    y:p.yearDays.toLocaleString()+" days", d:p.dayLabel,
+    t:p.tilt.toFixed(1)+"°"
+  }));
+  const CW=[110,108,120,130,175,70], PAD=20, ROW=30;
+  const TW=CW.reduce((a,b)=>a+b,0)+PAD*2;
+  const TH=96+ROW*(rows.length+1)+52;
+  const cv=document.createElement("canvas"); cv.width=TW; cv.height=TH;
+  const ctx=cv.getContext("2d");
+  // BG + stars
+  const bg=ctx.createLinearGradient(0,0,0,TH);
+  bg.addColorStop(0,"#000c28"); bg.addColorStop(1,"#000510");
+  ctx.fillStyle=bg; ctx.fillRect(0,0,TW,TH);
+  for(let i=0;i<140;i++){
+    ctx.fillStyle=`rgba(255,255,255,${(0.3+Math.random()*.5).toFixed(2)})`;
+    ctx.beginPath(); ctx.arc(Math.random()*TW,Math.random()*TH,Math.random()*1.2,0,Math.PI*2); ctx.fill();
+  }
+  // Title
+  const tg=ctx.createLinearGradient(0,0,TW,0);
+  tg.addColorStop(0,"#ffd32a"); tg.addColorStop(.5,"#f0932b"); tg.addColorStop(1,"#74b9ff");
+  ctx.fillStyle=tg; ctx.font="bold 22px 'Segoe UI',Arial,sans-serif";
+  ctx.textAlign="center"; ctx.fillText("🚀 "+inp.name+"'s Space Passport",TW/2,36);
+  ctx.fillStyle="rgba(180,200,255,.75)"; ctx.font="12px 'Segoe UI',Arial,sans-serif";
+  ctx.fillText("Earth weight: "+inp.weight.toFixed(1)+" "+inp.unit
+    +"   ·   Earth age: "+inp.age.toFixed(1)+" years",TW/2,56);
+  ctx.strokeStyle="rgba(100,140,255,.3)";
+  ctx.beginPath(); ctx.moveTo(PAD,70); ctx.lineTo(TW-PAD,70); ctx.stroke();
+  // Header row
+  ctx.fillStyle="#060e28"; ctx.fillRect(PAD,78,TW-PAD*2,ROW);
+  ctx.fillStyle="#ffd32a"; ctx.font="bold 11px 'Segoe UI',Arial,sans-serif";
+  ctx.textAlign="left"; let x=PAD+6;
+  ["🪐 Planet","⚖️ Weight","🎂 Age","📅 Year","🌀 Day Length","↕ Tilt"]
+    .forEach((h,ci)=>{ctx.fillText(h,x,78+20);x+=CW[ci];});
+  // Data rows
+  rows.forEach((row,ri)=>{
+    const y=96+ROW*(ri+1), isE=row.name==="Earth";
+    const p=PLANETS[ri];
+    ctx.fillStyle=isE?"rgba(85,239,196,.12)":ri%2?"rgba(255,255,255,.02)":"transparent";
+    ctx.fillRect(PAD,y,TW-PAD*2,ROW);
+    ctx.font=(isE?"bold ":"")+"11px 'Segoe UI',Arial,sans-serif"; ctx.textAlign="left";
+    let cx=PAD+6;
+    [row.name,row.w,row.a,row.y,row.d].forEach((c,ci)=>{
+      ctx.fillStyle=isE?"#55efc4":"#c8d8ff"; ctx.fillText(c,cx,y+20); cx+=CW[ci];
+    });
+    // Tilt column with colour
+    ctx.fillStyle=tiltColour(p.tilt); ctx.fillText(row.t, cx, y+20);
+    ctx.strokeStyle="rgba(255,255,255,.05)";
+    ctx.beginPath(); ctx.moveTo(PAD,y+ROW); ctx.lineTo(TW-PAD,y+ROW); ctx.stroke();
+  });
+  // Footer
+  ctx.fillStyle="rgba(255,255,255,.35)"; ctx.font="10px 'Segoe UI',Arial,sans-serif";
+  ctx.textAlign="center";
+  ctx.fillText("Data: NASA/JPL · NASA Space Place · NASA Solar System Exploration · Solar System Scope CC BY 4.0",TW/2,TH-14);
+  const lnk=document.createElement("a");
+  lnk.href=cv.toDataURL("image/png");
+  lnk.download=inp.name.replace(/\s+/g,"_")+"_space_passport.png";
+  document.body.appendChild(lnk); lnk.click(); document.body.removeChild(lnk);
+}
+
+/* ── INIT ────────────────────────────────────────────────── */
+buildGrid();
+animLoop();
+</script>
+</body>
+</html>
